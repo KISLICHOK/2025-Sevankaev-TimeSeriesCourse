@@ -3,7 +3,7 @@ import pandas as pd
 import math
 import cv2
 import imutils
-from google.colab.patches import cv2_imshow
+#from google.colab.patches import cv2_imshow
 
 
 class Image2TimeSeries:
@@ -32,7 +32,20 @@ class Image2TimeSeries:
         prep_img: image after preprocessing
         """
 
-        # INSERT YOUR CODE
+        if len(img.shape) == 3:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        inverted_img = cv2.bitwise_not(img)
+
+        blurred_img = cv2.GaussianBlur(inverted_img, (5, 5), 0)
+
+        _, binary_img = cv2.threshold(blurred_img, 100, 255, cv2.THRESH_BINARY)
+
+        kernel = np.ones((5, 5), np.uint8)
+        eroded_img = cv2.erode(binary_img, kernel, iterations=1)
+        dilated_img = cv2.dilate(eroded_img, kernel, iterations=1)
+
+        prep_img = cv2.medianBlur(dilated_img, 5)
 
         return prep_img
 
@@ -159,12 +172,13 @@ class Image2TimeSeries:
 
         cv2.drawContours(img, [contour], -1, (0, 255, 0), 6)
         cv2.circle(img, center, 7, (255, 255, 255), -1)
-        cv2.putText(img, "center", (center[0]-20, center[1]-20),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 6)
+        cv2.putText(img, "center", (center[0] - 20, center[1] - 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 6)
         for i in range(len(edge_coordinates)):
             cv2.drawContours(img, np.array([[center, edge_coordinates[i]]]), -1, (255, 0, 255), 4)
 
-        cv2_imshow(imutils.resize(img, width=200))
+        cv2.imshow('Image', imutils.resize(img, width=200))
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
 
     def convert(self, img: np.ndarray, is_visualize: bool = False) -> np.ndarray:
